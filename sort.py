@@ -11,6 +11,54 @@ def header():
     print("📊  SORTING DOKUMEN")
     print("=" * 45)
 
+def quick_sort(data, key):
+    if len(data) <= 1:
+        return data
+
+    pivot = data[len(data) // 2]
+
+    kiri = []
+    tengah = []
+    kanan = []
+
+    for item in data:
+        if item[key].lower() < pivot[key].lower():
+            kiri.append(item)
+
+        elif item[key].lower() > pivot[key].lower():
+            kanan.append(item)
+
+        else:
+            tengah.append(item)
+
+    return quick_sort(kiri, key) + tengah + quick_sort(kanan, key)
+
+def quick_sort_tanggal(data):
+    if len(data) <= 1:
+        return data
+
+    pivot = data[len(data) // 2]
+
+    kiri = []
+    tengah = []
+    kanan = []
+
+    for item in data:
+        if item['tanggal'] < pivot['tanggal']:
+            kiri.append(item)
+
+        elif item['tanggal'] > pivot['tanggal']:
+            kanan.append(item)
+
+        else:
+            tengah.append(item)
+
+    return (
+        quick_sort_tanggal(kiri)
+        + tengah
+        + quick_sort_tanggal(kanan)
+    )
+
 
 def sort_dokumen():
     clear()
@@ -32,11 +80,11 @@ def sort_dokumen():
     pilihan = input("👉 Pilih (1/2): ")
 
     if pilihan == "1":
-        hasil = sorted(data, key=lambda x: x['nama'].lower())
+        hasil = quick_sort(data, 'nama')
         metode = "Nama (A-Z)"
 
     elif pilihan == "2":
-        hasil = sorted(data, key=lambda x: x['tanggal'])
+        hasil = quick_sort_tanggal(data)
         metode = "Tanggal (Terlama → Terbaru)"
 
     else:

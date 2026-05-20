@@ -13,12 +13,14 @@ def baca_data():
 
     data = []
     for line in lines:
-        nama, file_doc, tanggal = line.strip().split("|")
-        data.append({
-            "nama": nama,
-            "file": file_doc,
-            "tanggal": tanggal
-        })
+        parts = line.strip().split("|")
+        if len(parts) == 3:
+            nama, file_doc, tanggal = parts
+            data.append({
+                "nama": nama.strip(),
+                "file": file_doc.strip(),
+                "tanggal": tanggal.strip()
+            })
     return data
 
 
@@ -40,4 +42,37 @@ def baca_riwayat():
     with open(RIWAYAT_FILE, "r") as file:
         lines = file.readlines()
 
-    return [line.strip() for line in lines]
+    data = []
+    for line in lines:
+        parts = line.strip().split("|")
+        if len(parts) == 3:
+            nama, file_doc, tanggal = parts
+            data.append({
+                "nama": nama.strip(),
+                "file": file_doc.strip(),
+                "tanggal": tanggal.strip()
+            })
+
+    data.reverse()
+    return data
+
+
+def format_riwayat(riwayat):
+    if not riwayat:
+        return []
+
+    max_nama = max(len(r["nama"]) for r in riwayat)
+    max_file = max(len(r["file"]) for r in riwayat)
+    max_tanggal = max(len(r["tanggal"]) for r in riwayat)
+
+    hasil = []
+    header = f"{'NAMA'.ljust(max_nama)} | {'FILE'.ljust(max_file)} | {'TANGGAL'.ljust(max_tanggal)}"
+    garis = "-" * len(header)
+    hasil.append(header)
+    hasil.append(garis)
+
+    for r in riwayat:
+        baris = f"{r['nama'].ljust(max_nama)} | {r['file'].ljust(max_file)} | {r['tanggal'].ljust(max_tanggal)}"
+        hasil.append(baris)
+
+    return hasil

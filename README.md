@@ -4,7 +4,7 @@ Repositori ini berisi *source code* untuk tugas akhir Project-Based Learning (PB
 Aplikasi ini adalah sistem digital perantara untuk mengelola tumpukan dokumen meja kerja fisik. Sistem ini diimplementasikan menggunakan struktur data **Stack (LIFO)** untuk memastikan dokumen yang paling baru masuk akan diproses terlebih dahulu. Antarmuka aplikasi dibangun menggunakan *library* **Textual** untuk menghadirkan pengalaman *Text User Interface* (TUI) di dalam terminal.
 
 ## Video Presentasi & Code Walkthrough
-**Tautan Alternatif:** (https://youtu.be/3Wutya548w4)
+https://youtu.be/3Wutya548w4
 
 ## Fitur Utama & Algoritma
 **Penyimpanan Permanen (I/O):** Menggunakan *file handling* teks datar (`data.txt` & `riwayat.txt`) tanpa RDBMS.

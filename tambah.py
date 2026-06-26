@@ -1,8 +1,16 @@
 import datetime
 import os
 import shutil
-from utils import baca_data, simpan_data
 from tkinter import Tk, filedialog
+
+from textual.app import ComposeResult
+from textual.screen import Screen
+from textual.widgets import Header, Footer, Static, Button, Input
+from textual.containers import Vertical, Horizontal
+from rich.panel import Panel
+from rich.align import Align
+
+from utils import baca_data, simpan_data
 
 
 def pilih_file():
@@ -20,43 +28,87 @@ def pilih_file():
     return file_path
 
 
-def tambah_dokumen():
-    data = baca_data()
+class TambahDokumenScreen(Screen):
+    def __init__(self):
+        super().__init__()
+        self.file_path = ""
 
-    nama = input("Nama dokumen: ")
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Vertical(
+            Static(Align.center(Panel("Tambah Dokumen Baru", expand=False))),
+            Input(placeholder="Nama dokumen...", id="nama"),
+            Button("Pilih File", id="pilih", variant="primary"),
+            Static("", id="file_info"),
+            Horizontal(
+                Button("Kembali", id="back"),
+                 Button("Simpan", id="simpan", variant="success"),
+                id="action_buttons"
+            ),
+        )
+        yield Footer()
 
-    print("Pilih file dokumen...")
-    file_path = pilih_file()
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "back":
+            self.app.pop_screen()
 
-    if not file_path:
-        print("Tidak ada file dipilih.")
-        return
+        elif event.button.id == "pilih":
+            file_path = pilih_file()
+            info = self.query_one("#file_info", Static)
 
-    if not (file_path.endswith(".pdf") or file_path.endswith(".docx")):
-        print("Format harus PDF/DOCX!")
-        return
+            if not file_path:
+                info.update("Tidak ada file dipilih.")
+                return
 
-    # 🔥 Ambil nama file saja
-    nama_file = os.path.basename(file_path)
+            if not (file_path.endswith(".pdf") or file_path.endswith(".docx")):
+                info.update("Format harus PDF/DOCX.")
+                return
 
-    # 🔥 Buat folder jika belum ada
-    folder_tujuan = "file_dokumen"
-    if not os.path.exists(folder_tujuan):
-        os.makedirs(folder_tujuan)
+            self.file_path = file_path
+            info.update(f"File dipilih: {os.path.basename(file_path)}")
 
-    # 🔥 Path tujuan
-    tujuan = os.path.join(folder_tujuan, nama_file)
+        elif event.button.id == "simpan":
+            nama_input = self.query_one("#nama", Input)
+            nama = nama_input.value.strip()
+            info = self.query_one("#file_info", Static)
 
-    # 🔥 Copy file ke folder project
-    shutil.copy(file_path, tujuan)
+            if not nama:
+                info.update("Nama dokumen tidak boleh kosong.")
+                return
 
-    tanggal = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            if not self.file_path:
+                info.update("Pilih file terlebih dahulu.")
+                return
 
-    data.append({
-        "nama": nama,
-        "file": nama_file,
-        "tanggal": tanggal
-    })
+            data = baca_data()
 
-    simpan_data(data)
-    print("Dokumen berhasil ditambahkan & disimpan ke folder!")
+            for item in data:
+                if item["nama"].lower() == nama.lower():
+                    info.update("Nama dokumen sudah ada.")
+                    return
+
+            nama_file = os.path.basename(self.file_path)
+
+            folder_tujuan = "file_dokumen"
+            if not os.path.exists(folder_tujuan):
+                os.makedirs(folder_tujuan)
+
+            tujuan = os.path.join(folder_tujuan, nama_file)
+
+            shutil.copy(self.file_path, tujuan)
+
+            tanggal = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            data.append({
+                "nama": nama,
+                "file": nama_file,
+                "tanggal": tanggal
+            })
+
+            simpan_data(data)
+
+            self.app.pop_screen()
+
+
+def tambah_dokumen(app):
+    app.push_screen(TambahDokumenScreen())

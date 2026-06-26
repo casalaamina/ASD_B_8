@@ -7,7 +7,6 @@ Aplikasi ini adalah sistem digital perantara untuk mengelola tumpukan dokumen me
 **Tautan Alternatif:** (https://youtu.be/3Wutya548w4)
 
 ## Fitur Utama & Algoritma
-* 
 **Penyimpanan Permanen (I/O):** Menggunakan *file handling* teks datar (`data.txt` & `riwayat.txt`) tanpa RDBMS.
 * 
 **Eksekusi Stack (LIFO):** Implementasi fungsi *pop()* dengan kompleksitas waktu amortisasi O(1) untuk penarikan dokumen teratas.
@@ -19,7 +18,6 @@ Aplikasi ini adalah sistem digital perantara untuk mengelola tumpukan dokumen me
 
 
 ## Tim Pengembang (Kelompok 8)
-* 
 **Cinta Asih Salaamina** (J0403251045) - *Project Manager & TUI Developer* 
 * 
 **Najwa Hanifa Sholiha Asy Syifa SM** (J0403251113) - *Data Structure & Feature Developer* 

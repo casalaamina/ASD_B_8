@@ -1,105 +1,114 @@
+from textual.app import ComposeResult
+from textual.screen import Screen
+from textual.widgets import Header, Footer, Static, Button, Input
+from textual.containers import Vertical, Horizontal
+from rich.panel import Panel
+from rich.align import Align
+
 from utils import baca_data
-import os
 
 
-def clear():
-    os.system("cls" if os.name == "nt" else "clear")
+class SearchDokumenScreen(Screen):
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Vertical(
+            Static(Align.center(Panel("Masukkan nama dokumen untuk mencari", title="Search Dokumen", expand=False))),
+            Input(placeholder="Nama dokumen...", id="keyword"),
+            Horizontal(
+                Button("Kembali", id="back"),
+                Button("Cari", id="cari", variant="primary"),
+                id="buttons"
+            ),
+        )
+        yield Footer()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "back":
+            self.app.pop_screen()
+
+        elif event.button.id == "cari":
+            input_widget = self.query_one("#keyword", Input)
+            keyword = input_widget.value.lower().strip()
+
+            if not keyword:
+                return
+
+            data = baca_data()
+
+            if not data:
+                result = "Tidak ada data dokumen."
+            else:
+                hasil = []
+                for d in data:
+                    if keyword in d["nama"].lower():
+                        hasil.append(d)
+
+                if not hasil:
+                    result = "Tidak ditemukan dokumen yang cocok."
+                else:
+                    lines = [f"Ditemukan {len(hasil)} dokumen", ""]
+                    for i, d in enumerate(hasil, 1):
+                        lines.append(f"{i}. {d['nama']}")
+                        lines.append(f"   File    : {d['file']}")
+                        lines.append(f"   Tanggal : {d['tanggal']}")
+                        lines.append("")
+                    result = "\n".join(lines)
+
+            self.app.push_screen(HasilSearchScreen(result))
 
 
-def header():
-    print("=" * 45)
-    print("🔍  SEARCH DOKUMEN")
-    print("=" * 45)
+class HasilSearchScreen(Screen):
+    def __init__(self, content: str):
+        super().__init__()
+        self.content = content
 
-def quick_sort(data, key):
-    if len(data) <= 1:
-        return data
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Vertical(
+            Static(Align.center(Panel(self.content, title="Hasil Pencarian", expand=False))),
+            Input(placeholder="Cari lagi...", id="keyword"),
+            Horizontal(
+                Button("Kembali", id="back"),
+                Button("Cari", id="cari", variant="primary"),
+                id="buttons"
+            ),
+        )
+        yield Footer()
 
-    pivot = data[len(data) // 2]
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "back":
+            self.app.pop_screen()
 
-    kiri = []
-    tengah = []
-    kanan = []
+        elif event.button.id == "cari":
+            input_widget = self.query_one("#keyword", Input)
+            keyword = input_widget.value.lower().strip()
 
-    for item in data:
-        if item[key].lower() < pivot[key].lower():
-            kiri.append(item)
+            if not keyword:
+                return
 
-        elif item[key].lower() > pivot[key].lower():
-            kanan.append(item)
+            data = baca_data()
 
-        else:
-            tengah.append(item)
+            if not data:
+                result = "Tidak ada data dokumen."
+            else:
+                hasil = []
+                for d in data:
+                    if keyword in d["nama"].lower():
+                        hasil.append(d)
 
-    return quick_sort(kiri, key) + tengah + quick_sort(kanan, key)
+                if not hasil:
+                    result = "Tidak ditemukan dokumen yang cocok."
+                else:
+                    lines = [f"Ditemukan {len(hasil)} dokumen", ""]
+                    for i, d in enumerate(hasil, 1):
+                        lines.append(f"{i}. {d['nama']}")
+                        lines.append(f"   File    : {d['file']}")
+                        lines.append(f"   Tanggal : {d['tanggal']}")
+                        lines.append("")
+                    result = "\n".join(lines)
 
-def binary_search(data, keyword, key):
-    low = 0
-    high = len(data) - 1
-    hasil = []
-
-    while low <= high:
-        mid = (low + high) // 2
-
-        nilai = data[mid][key].lower()
-
-        if keyword == nilai:
-            # Ambil data tengah
-            hasil.append(data[mid])
-
-            # Cek ke kiri
-            kiri = mid - 1
-            while kiri >= 0 and data[kiri][key].lower() == keyword:
-                hasil.append(data[kiri])
-                kiri -= 1
-
-            # Cek ke kanan
-            kanan = mid + 1
-            while kanan < len(data) and data[kanan][key].lower() == keyword:
-                hasil.append(data[kanan])
-                kanan += 1
-
-            return hasil
-
-        elif keyword < nilai:
-            high = mid - 1
-
-        else:
-            low = mid + 1
-
-    return hasil
+            self.app.push_screen(HasilSearchScreen(result))
 
 
-def search_dokumen():
-    clear()
-    header()
-
-    data = baca_data()
-
-    if not data:
-        print("\n⚠️  Tidak ada data dokumen.")
-        input("\nTekan ENTER untuk kembali...")
-        return
-
-    keyword = input("\n🔎 Masukkan nama dokumen: ").lower()
-
-    data_sorted = quick_sort(data, 'nama')
-
-    hasil = binary_search(data_sorted, keyword, 'nama')
-
-    print("\n📊 HASIL PENCARIAN")
-    print("-" * 45)
-
-    if not hasil:
-        print("❌ Tidak ditemukan dokumen yang cocok.")
-
-    else:
-        print(f"✅ Ditemukan {len(hasil)} dokumen\n")
-
-        for i, d in enumerate(hasil, 1):
-            print(f"{i}. 📌 {d['nama']}")
-            print(f"    📁 File    : {d['file']}")
-            print(f"    📅 Tanggal : {d['tanggal']}")
-            print("-" * 45)
-
-    input("\nTekan ENTER untuk kembali...")
+def search_dokumen(app):
+    app.push_screen(SearchDokumenScreen())

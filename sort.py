@@ -1,104 +1,138 @@
+from textual.app import ComposeResult
+from textual.screen import Screen
+from textual.widgets import Header, Footer, Static, Button
+from textual.containers import Vertical, Horizontal
+from rich.panel import Panel
+from rich.align import Align
+
 from utils import baca_data
-import os
 
 
-def clear():
-    os.system("cls" if os.name == "nt" else "clear")
 
-
-def header():
-    print("=" * 45)
-    print("📊  SORTING DOKUMEN")
-    print("=" * 45)
-
-def quick_sort(data, key):
+def merge_sort(data, key):
     if len(data) <= 1:
         return data
 
-    pivot = data[len(data) // 2]
+    mid = len(data) // 2
+    left = merge_sort(data[:mid], key)
+    right = merge_sort(data[mid:], key)
 
-    kiri = []
-    tengah = []
-    kanan = []
+    return merge(left, right, key)
 
-    for item in data:
-        if item[key].lower() < pivot[key].lower():
-            kiri.append(item)
 
-        elif item[key].lower() > pivot[key].lower():
-            kanan.append(item)
+def merge(left, right, key):
+    result = []
+    i = j = 0
 
+    while i < len(left) and j < len(right):
+        if left[i][key].lower() <= right[j][key].lower():
+            result.append(left[i])
+            i += 1
         else:
-            tengah.append(item)
+            result.append(right[j])
+            j += 1
 
-    return quick_sort(kiri, key) + tengah + quick_sort(kanan, key)
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
 
-def quick_sort_tanggal(data):
+def merge_sort_tanggal(data):
     if len(data) <= 1:
         return data
 
-    pivot = data[len(data) // 2]
+    mid = len(data) // 2
+    left = merge_sort_tanggal(data[:mid])
+    right = merge_sort_tanggal(data[mid:])
 
-    kiri = []
-    tengah = []
-    kanan = []
+    return merge_tanggal(left, right)
 
-    for item in data:
-        if item['tanggal'] < pivot['tanggal']:
-            kiri.append(item)
 
-        elif item['tanggal'] > pivot['tanggal']:
-            kanan.append(item)
+def merge_tanggal(left, right):
+    result = []
+    i = j = 0
 
+    while i < len(left) and j < len(right):
+        if left[i]["tanggal"] <= right[j]["tanggal"]:
+            result.append(left[i])
+            i += 1
         else:
-            tengah.append(item)
+            result.append(right[j])
+            j += 1
 
-    return (
-        quick_sort_tanggal(kiri)
-        + tengah
-        + quick_sort_tanggal(kanan)
-    )
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
+
+class SortDokumenScreen(Screen):
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Vertical(
+            Static(Align.center(
+                Panel("Pilih metode sorting", title="Sorting Dokumen", expand=False)
+            )),
+            Horizontal(
+                Button("Nama (A-Z)", id="nama", variant="primary"),
+                Button("Tanggal", id="tanggal", variant="primary"),
+            ),
+            Horizontal(
+                Button("Kembali", id="back"),
+            )
+        )
+        yield Footer()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "back":
+            self.app.pop_screen()
+
+        elif event.button.id == "nama":
+            data = baca_data()
+            if not data:
+                result = "Tidak ada data dokumen."
+            else:
+                hasil = merge_sort(data, "nama")
+                result = self.format_hasil(hasil, "Nama (A-Z)")
+            self.app.push_screen(HasilSortScreen(result))
+
+        elif event.button.id == "tanggal":
+            data = baca_data()
+            if not data:
+                result = "Tidak ada data dokumen."
+            else:
+                hasil = merge_sort_tanggal(data)
+                result = self.format_hasil(hasil, "Tanggal (Terlama → Terbaru)")
+            self.app.push_screen(HasilSortScreen(result))
+
+    def format_hasil(self, data, metode):
+        lines = [f"Hasil Sorting: {metode}", ""]
+        for i, d in enumerate(data, 1):
+            lines.append(f"{i}. {d['nama']}")
+            lines.append(f"   File    : {d['file']}")
+            lines.append(f"   Tanggal : {d['tanggal']}")
+            lines.append("")
+        return "\n".join(lines)
 
 
-def sort_dokumen():
-    clear()
-    header()
+class HasilSortScreen(Screen):
+    def __init__(self, content: str):
+        super().__init__()
+        self.content = content
 
-    data = baca_data()
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Vertical(
+            Static(Align.center(
+                Panel(self.content, title="Hasil Sorting", expand=False)
+            )),
+            Horizontal(
+                Button("Kembali", id="back"),
+            )
+        )
+        yield Footer()
 
-    if not data:
-        print("\n⚠️  Tidak ada data dokumen.")
-        input("\nTekan ENTER untuk kembali...")
-        return
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "back":
+            self.app.pop_screen()
 
-    print("\n📌 Pilih metode sorting:")
-    print("-" * 45)
-    print("1. 🔤 Nama (A-Z)")
-    print("2. 📅 Tanggal (Terlama → Terbaru)")
-    print("-" * 45)
 
-    pilihan = input("👉 Pilih (1/2): ")
-
-    if pilihan == "1":
-        hasil = quick_sort(data, 'nama')
-        metode = "Nama (A-Z)"
-
-    elif pilihan == "2":
-        hasil = quick_sort_tanggal(data)
-        metode = "Tanggal (Terlama → Terbaru)"
-
-    else:
-        print("\n❌ Pilihan tidak valid!")
-        input("Tekan ENTER untuk kembali...")
-        return
-
-    print(f"\n📊 Hasil Sorting: {metode}")
-    print("-" * 45)
-
-    for i, d in enumerate(hasil, 1):
-        print(f"{i}. 📌 {d['nama']}")
-        print(f"    📁 File    : {d['file']}")
-        print(f"    📅 Tanggal : {d['tanggal']}")
-        print("-" * 45)
-
-    input("\nTekan ENTER untuk kembali...")
+def sort_dokumen(app):
+    app.push_screen(SortDokumenScreen())
